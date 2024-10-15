@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package backup;
+
+service Backup {
+  rpc FindAll (GetBackupRequest) returns (GetBackupResponse) {}
+  rpc Dump (DumpRequest) returns (BackupFile) {}
+}
+
+message BackupFile {
+  string id = 1;
+  string dbName = 2;
+  string fileName = 3;
+  string path = 4;
+  string size = 5;
+  int64 createdAt = 6;
+}
+
+message GetBackupRequest {
+  int32 offset = 1;   
+  int32 limit = 2;  
+  string dbName = 3;
+  int64 startDate = 4;
+  int64 endDate = 5;
+}
+
+message GetBackupResponse {
+  repeated BackupFile files = 1;
+  int32 total = 2;
+}
+
+message DumpRequest {
+  string username = 1;
+  string password = 2;
+  string host = 3;
+  string port = 4;
+  string dbName = 5;
+}

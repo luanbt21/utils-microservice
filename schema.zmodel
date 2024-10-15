@@ -1,0 +1,23 @@
+datasource db {
+    provider = 'sqlite'
+    url = 'file:./dev.db'
+}
+
+generator client {
+    provider      = "prisma-client-js"
+}
+
+generator dbml {
+    provider = "prisma-dbml-generator"
+}
+
+model Backup {
+    id        String   @id @default(cuid())
+    createdAt DateTime @default(now())
+    dbName    String
+    fileName  String
+    path      String
+    size      String
+
+    @@allow('all', true)
+}

@@ -1,0 +1,14 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table Backup {
+  id String [pk]
+  createdAt DateTime [default: `now()`, not null]
+  dbName String [not null]
+  fileName String [not null]
+  path String [not null]
+  size String [not null]
+
+  Note: '@@allow(\'all\', true)'
+}
