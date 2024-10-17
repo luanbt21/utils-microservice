@@ -6,7 +6,7 @@
 	"private": true,
 	"license": "MIT",
 	"scripts": {
-		"protoc": "protoc --ts_out=./src/grpc/prototype/ --proto_path=./proto ./proto/*",
+		"protoc": "protoc --ts_proto_opt=nestJs=true --plugin=./node_modules/.bin/protoc-gen-ts_proto --ts_proto_out=./src/grpc ./proto/*.proto",
 		"generate": "zenstack generate",
 		"build": "nest build",
 		"format": "biome format --write",
@@ -46,6 +46,7 @@
 		"reflect-metadata": "^0.2.2",
 		"rxjs": "^7.8.1",
 		"swagger-ui-express": "^5.0.1",
+		"ts-proto": "^2.2.4",
 		"xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
 	},
 	"devDependencies": {

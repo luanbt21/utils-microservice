@@ -1,5 +1,4 @@
 import { Inject, Injectable, Logger } from "@nestjs/common";
-import { backup } from "../prototype/backup";
 import { ENHANCED_PRISMA } from "@zenstackhq/server/nestjs";
 import { PrismaService } from "../../prisma.service";
 import { Prisma } from "@prisma/client";
@@ -7,7 +6,12 @@ import { promisify } from "node:util";
 import { exec } from "node:child_process";
 import { mkdir, rm, stat } from "node:fs/promises";
 import { resolve } from "node:path";
-
+import {
+	GetBackupRequest,
+	GetBackupResponse,
+	DumpRequest,
+	BackupFile,
+} from "../proto/backup";
 @Injectable()
 export class BackupService {
 	private readonly logger = new Logger(BackupService.name);
@@ -15,9 +19,7 @@ export class BackupService {
 		@Inject(ENHANCED_PRISMA) private readonly prismaService: PrismaService,
 	) {}
 
-	async findAll(
-		data: backup.GetBackupRequest,
-	): Promise<backup.GetBackupResponse> {
+	async findAll(data: GetBackupRequest): Promise<GetBackupResponse> {
 		const { limit, offset, dbName, startDate, endDate } = data;
 		const where = {
 			dbName,
@@ -33,13 +35,12 @@ export class BackupService {
 		});
 		const total = await this.prismaService.backup.count({ where });
 
-		return backup.GetBackupResponse.fromObject({
-			total,
-			files: backups.map((file) => {
-				const { createdAt, ...rest } = file;
-				return { ...rest, createdAt: createdAt.getTime() };
-			}),
-		});
+		const files = backups.map(({ createdAt, ...rest }) => ({
+			...rest,
+			createdAt: createdAt.getTime(),
+		}));
+
+		return { files, total };
 	}
 
 	async dump({
@@ -48,7 +49,7 @@ export class BackupService {
 		host,
 		port,
 		dbName,
-	}: backup.DumpRequest): Promise<backup.BackupFile> {
+	}: DumpRequest): Promise<BackupFile> {
 		const asyncExec = promisify(exec);
 		const now = new Date().toISOString();
 
@@ -88,10 +89,10 @@ export class BackupService {
 			});
 			this.logger.log(`Database ${dbName} dumped successfully to ${fileName}`);
 
-			return backup.BackupFile.fromObject({
+			return {
 				...rest,
 				createdAt: createdAt.getTime(),
-			});
+			};
 		} catch (error) {
 			this.logger.error(`error: ${error}`);
 			await rm(path);

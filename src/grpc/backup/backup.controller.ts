@@ -1,21 +1,23 @@
 import { Controller } from "@nestjs/common";
-import { GrpcMethod } from "@nestjs/microservices";
 import { BackupService } from "./backup.service";
-import { backup } from "../prototype/backup";
+import {
+	BackupControllerMethods,
+	BackupFile,
+	DumpRequest,
+	GetBackupRequest,
+	GetBackupResponse,
+} from "../proto/backup";
 
 @Controller()
+@BackupControllerMethods()
 export class BackupController {
 	constructor(private readonly backupService: BackupService) {}
 
-	@GrpcMethod("Backup", "FindAll")
-	async findAll(
-		data: backup.GetBackupRequest,
-	): Promise<backup.GetBackupResponse> {
+	async findAll(data: GetBackupRequest): Promise<GetBackupResponse> {
 		return this.backupService.findAll(data);
 	}
 
-	@GrpcMethod("Backup", "Dump")
-	async dump(data: backup.DumpRequest): Promise<backup.BackupFile> {
+	async dump(data: DumpRequest): Promise<BackupFile> {
 		return this.backupService.dump(data);
 	}
 }
