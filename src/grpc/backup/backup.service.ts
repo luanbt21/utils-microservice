@@ -43,6 +43,17 @@ export class BackupService {
 		return { files, total };
 	}
 
+	async findById(id: string): Promise<BackupFile> {
+		const backup = await this.prismaService.backup.findUnique({
+			where: { id },
+		});
+		const { createdAt, ...rest } = backup;
+		return {
+			...rest,
+			createdAt: createdAt.getTime(),
+		};
+	}
+
 	async dump({
 		username,
 		password,

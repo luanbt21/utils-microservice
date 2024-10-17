@@ -4,7 +4,12 @@ package backup;
 
 service Backup {
   rpc FindAll (GetBackupRequest) returns (GetBackupResponse) {}
+  rpc FindById (FindByIdRequest) returns (BackupFile) {}
   rpc Dump (DumpRequest) returns (BackupFile) {}
+}
+
+message FindByIdRequest {
+  string id = 1;
 }
 
 message BackupFile {

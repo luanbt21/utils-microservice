@@ -10,6 +10,10 @@ import { Observable } from "rxjs";
 
 export const protobufPackage = "backup";
 
+export interface FindByIdRequest {
+  id: string;
+}
+
 export interface BackupFile {
   id: string;
   dbName: string;
@@ -45,18 +49,22 @@ export const BACKUP_PACKAGE_NAME = "backup";
 export interface BackupClient {
   findAll(request: GetBackupRequest): Observable<GetBackupResponse>;
 
+  findById(request: FindByIdRequest): Observable<BackupFile>;
+
   dump(request: DumpRequest): Observable<BackupFile>;
 }
 
 export interface BackupController {
   findAll(request: GetBackupRequest): Promise<GetBackupResponse> | Observable<GetBackupResponse> | GetBackupResponse;
 
+  findById(request: FindByIdRequest): Promise<BackupFile> | Observable<BackupFile> | BackupFile;
+
   dump(request: DumpRequest): Promise<BackupFile> | Observable<BackupFile> | BackupFile;
 }
 
 export function BackupControllerMethods() {
   return function (constructor: Function) {
-    const grpcMethods: string[] = ["findAll", "dump"];
+    const grpcMethods: string[] = ["findAll", "findById", "dump"];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
       GrpcMethod("Backup", method)(constructor.prototype[method], method, descriptor);

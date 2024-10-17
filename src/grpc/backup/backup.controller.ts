@@ -4,6 +4,7 @@ import {
 	BackupControllerMethods,
 	BackupFile,
 	DumpRequest,
+	FindByIdRequest,
 	GetBackupRequest,
 	GetBackupResponse,
 } from "../proto/backup";
@@ -15,6 +16,10 @@ export class BackupController {
 
 	async findAll(data: GetBackupRequest): Promise<GetBackupResponse> {
 		return this.backupService.findAll(data);
+	}
+
+	async findById({ id }: FindByIdRequest): Promise<BackupFile> {
+		return this.backupService.findById(id);
 	}
 
 	async dump(data: DumpRequest): Promise<BackupFile> {
