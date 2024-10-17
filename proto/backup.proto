@@ -18,15 +18,15 @@ message BackupFile {
   string fileName = 3;
   string path = 4;
   string size = 5;
-  int64 createdAt = 6;
+  string createdAt = 6;
 }
 
 message GetBackupRequest {
   int32 offset = 1;   
   int32 limit = 2;  
   string dbName = 3;
-  int64 startDate = 4;
-  int64 endDate = 5;
+  string startDate = 4;
+  string endDate = 5;
 }
 
 message GetBackupResponse {

@@ -21,10 +21,14 @@ export class BackupService {
 
 	async findAll(data: GetBackupRequest): Promise<GetBackupResponse> {
 		const { limit, offset, dbName, startDate, endDate } = data;
+		console.log({ startDate, endDate });
+
 		const where = {
 			dbName,
-			...(!!startDate && { startDate }),
-			...(!!endDate && { endDate }),
+			createdAt: {
+				gte: startDate ? new Date(startDate) : undefined,
+				lte: endDate ? new Date(endDate) : undefined,
+			},
 		} satisfies Prisma.BackupFindManyArgs["where"];
 
 		const backups = await this.prismaService.backup.findMany({
@@ -37,7 +41,7 @@ export class BackupService {
 
 		const files = backups.map(({ createdAt, ...rest }) => ({
 			...rest,
-			createdAt: createdAt.getTime(),
+			createdAt: createdAt.toISOString(),
 		}));
 
 		return { files, total };
@@ -50,7 +54,7 @@ export class BackupService {
 		const { createdAt, ...rest } = backup;
 		return {
 			...rest,
-			createdAt: createdAt.getTime(),
+			createdAt: createdAt.toISOString(),
 		};
 	}
 
@@ -102,7 +106,7 @@ export class BackupService {
 
 			return {
 				...rest,
-				createdAt: createdAt.getTime(),
+				createdAt: createdAt.toISOString(),
 			};
 		} catch (error) {
 			this.logger.error(`error: ${error}`);

@@ -20,15 +20,15 @@ export interface BackupFile {
   fileName: string;
   path: string;
   size: string;
-  createdAt: number;
+  createdAt: string;
 }
 
 export interface GetBackupRequest {
   offset: number;
   limit: number;
   dbName: string;
-  startDate: number;
-  endDate: number;
+  startDate: string;
+  endDate: string;
 }
 
 export interface GetBackupResponse {
