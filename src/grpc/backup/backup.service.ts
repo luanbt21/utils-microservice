@@ -21,7 +21,6 @@ export class BackupService {
 
 	async findAll(data: GetBackupRequest): Promise<GetBackupResponse> {
 		const { limit, offset, dbName, startDate, endDate } = data;
-		console.log({ startDate, endDate });
 
 		const where = {
 			dbName,
@@ -69,7 +68,7 @@ export class BackupService {
 		const now = new Date().toISOString();
 
 		if (!dbName) {
-			return;
+			throw new Error("Database name is required");
 		}
 		username = username ? `-u ${username}` : "";
 		// -p${password} is correct

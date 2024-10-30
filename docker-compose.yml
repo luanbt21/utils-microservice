@@ -1,0 +1,31 @@
+version: "3.8"
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_server
+    environment:
+      MYSQL_ROOT_PASSWORD: your_password
+      MYSQL_DATABASE: your_database
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  mysql-client:
+    image: mysql:8.0
+    container_name: mysql_client
+    command: mysql
+    volumes:
+      - ./mysql-client-config/.my.cnf:/root/.my.cnf # Mount the .my.cnf file
+    depends_on:
+      - mysql
+    entrypoint:
+      [
+        "/bin/sh",
+        "-c",
+        "while ! mysqladmin ping -h mysql --silent; do sleep 1; done && mysql -h mysql your_database",
+      ]
+
+volumes:
+  mysql_data:

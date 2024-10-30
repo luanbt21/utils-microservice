@@ -12,7 +12,7 @@ import {
 @Controller()
 @BackupControllerMethods()
 export class BackupController {
-	constructor(private readonly backupService: BackupService) {}
+	constructor(private readonly backupService: BackupService) { }
 
 	async findAll(data: GetBackupRequest): Promise<GetBackupResponse> {
 		return this.backupService.findAll(data);
