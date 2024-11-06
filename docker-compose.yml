@@ -1,19 +1,62 @@
 version: "3.8"
 
 services:
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    working_dir: /app
+    environment:
+      DATABASE_URL: mysql://root:test@mysql:3306/utils
+    volumes:
+      - ./test:/app/test
+      - ./src:/app/src
+    command: ["pnpm", "test:e2e"]
+    
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mysql
+      - postgres
+      - mongo
+      
   mysql:
-    image: mysql:8.0
+    image: mysql
     container_name: mysql_server
     environment:
-      MYSQL_ROOT_PASSWORD: your_password
-      MYSQL_DATABASE: your_database
+      MYSQL_ROOT_PASSWORD: test
+      MYSQL_DATABASE: test
     ports:
       - "3306:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - ./mysql_data:/var/lib/mysql
+
+  postgres:
+    image: postgres
+    container_name: postgres_server
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: test
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+
+  mongo:
+    image: mongo
+    container_name: mongo_server
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: test
+      MONGO_INITDB_DATABASE: test
+    ports:
+      - "27017:27017"
+    # volumes:
+    #   - ./mongo_data:/data/db
 
   mysql-client:
-    image: mysql:8.0
+    image: mysql
     container_name: mysql_client
     command: mysql
     volumes:
@@ -24,8 +67,6 @@ services:
       [
         "/bin/sh",
         "-c",
-        "while ! mysqladmin ping -h mysql --silent; do sleep 1; done && mysql -h mysql your_database",
+        "while ! mysqladmin ping -h mysql --silent; do sleep 1; done && mysql -h mysql test",
       ]
 
-volumes:
-  mysql_data:

@@ -18,6 +18,7 @@ model Backup {
     fileName  String
     path      String
     size      String
+    provider  Int
 
     @@allow('all', true)
 }

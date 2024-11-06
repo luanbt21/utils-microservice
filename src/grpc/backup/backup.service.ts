@@ -1,6 +1,5 @@
-import { Inject, Injectable, Logger } from "@nestjs/common";
-import { ENHANCED_PRISMA } from "@zenstackhq/server/nestjs";
-import { PrismaService } from "../../prisma.service";
+import { Injectable, Logger } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
 import { Prisma } from "@prisma/client";
 import { promisify } from "node:util";
 import { exec } from "node:child_process";
@@ -11,18 +10,25 @@ import {
 	GetBackupResponse,
 	DumpRequest,
 	BackupFile,
+	Provider,
 } from "../proto/backup";
 @Injectable()
 export class BackupService {
 	private readonly logger = new Logger(BackupService.name);
-	constructor(
-		@Inject(ENHANCED_PRISMA) private readonly prismaService: PrismaService,
-	) {}
+	constructor(private readonly prismaService: PrismaService) {}
 
 	async findAll(data: GetBackupRequest): Promise<GetBackupResponse> {
-		const { limit, offset, dbName, startDate, endDate } = data;
+		const {
+			limit = 10,
+			offset = 0,
+			dbName,
+			startDate,
+			endDate,
+			provider,
+		} = data;
 
 		const where = {
+			provider,
 			dbName,
 			createdAt: {
 				gte: startDate ? new Date(startDate) : undefined,
@@ -57,31 +63,31 @@ export class BackupService {
 		};
 	}
 
-	async dump({
-		username,
-		password,
-		host,
-		port,
-		dbName,
-	}: DumpRequest): Promise<BackupFile> {
+	async dump({ provider, ...credentials }: DumpRequest): Promise<BackupFile> {
 		const asyncExec = promisify(exec);
 		const now = new Date().toISOString();
+
+		const { dbName } = credentials;
 
 		if (!dbName) {
 			throw new Error("Database name is required");
 		}
-		username = username ? `-u ${username}` : "";
-		// -p${password} is correct
-		password = password ? `-p${password}` : "";
-		host = host ? `-h ${host}` : "";
-		port = port ? `-P ${port}` : "";
 
 		const fileName = `${dbName}-${now}.sql`;
 		await mkdir(`../backup-db/${dbName}`, { recursive: true });
-
 		const path = resolve(`../backup-db/${dbName}/${fileName}`);
 
-		const command = `mysqldump ${username} ${password} ${host} ${port} ${dbName} > ${path}`;
+		let command: string;
+		if (provider === Provider.POSTGRES) {
+			command = this.pgDumpCommand(credentials, path);
+		} else if (provider === Provider.MYSQL) {
+			command = this.mysqlDumpCommand(credentials, path);
+		} else if (provider === Provider.MONGODB) {
+			command = this.mongoDumpCommand(credentials, path);
+		} else {
+			throw new Error("Unsupported provider");
+		}
+
 		try {
 			const { stdout, stderr } = await asyncExec(command);
 			if (stderr) {
@@ -94,14 +100,16 @@ export class BackupService {
 			const stats = await stat(path);
 			if (stats.size === 0) {
 				await rm(path);
-				this.logger.error(`Database ${dbName} dumped failed`);
+				this.logger.error(`Database ${provider}:${dbName} dumped failed`);
 				return;
 			}
 
 			const { createdAt, ...rest } = await this.prismaService.backup.create({
-				data: { dbName, fileName, path: path, size: stats.size.toString() },
+				data: { dbName, fileName, path, provider, size: stats.size.toString() },
 			});
-			this.logger.log(`Database ${dbName} dumped successfully to ${fileName}`);
+			this.logger.log(
+				`Database ${provider}:${dbName} dumped successfully to ${fileName}`,
+			);
 
 			return {
 				...rest,
@@ -111,5 +119,43 @@ export class BackupService {
 			this.logger.error(`error: ${error}`);
 			await rm(path);
 		}
+	}
+
+	private mysqlDumpCommand(
+		{ username, password, host, port, dbName }: Omit<DumpRequest, "provider">,
+		path: string,
+	) {
+		username = username ? `-u ${username}` : "";
+		// -p${password} is correct
+		password = password ? `-p${password}` : "";
+		host = host ? `-h ${host}` : "";
+		port = port ? `-P ${port}` : "";
+
+		return `mysqldump ${username} ${password} ${host} ${port} ${dbName} > ${path}`;
+	}
+
+	private pgDumpCommand(
+		{ username, password, host, port, dbName }: Omit<DumpRequest, "provider">,
+		path: string,
+	) {
+		username = username ? `-U ${username}` : "";
+		host = host ? `-h ${host}` : "";
+		port = port ? `-p ${port}` : "";
+
+		return `PGPASSWORD=${password} pg_dump ${username} ${host} ${port} -d ${dbName} -f ${path}`;
+	}
+
+	private mongoDumpCommand(
+		{ username, password, host, port, dbName }: Omit<DumpRequest, "provider">,
+		path: string,
+	) {
+		username = username ? `-u=${username}` : "";
+		password = password ? `-p=${password}` : "";
+		host = host ? `-h=${host}` : "";
+		port = port ? `--port=${port}` : "";
+
+		// return `mongodump 'mongodb://${username}:${password}@${host}:${port}/${dbName}?authSource=admin' --archive=${path}`;
+
+		return `mongodump --authenticationDatabase=admin ${username} ${password} ${host} ${port} --db=${dbName} --archive=${path}`;
 	}
 }

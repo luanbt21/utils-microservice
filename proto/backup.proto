@@ -3,9 +3,9 @@ syntax = "proto3";
 package backup;
 
 service Backup {
-  rpc FindAll (GetBackupRequest) returns (GetBackupResponse) {}
-  rpc FindById (FindByIdRequest) returns (BackupFile) {}
-  rpc Dump (DumpRequest) returns (BackupFile) {}
+  rpc FindAll(GetBackupRequest) returns (GetBackupResponse) {}
+  rpc FindById(FindByIdRequest) returns (BackupFile) {}
+  rpc Dump(DumpRequest) returns (BackupFile) {}
 }
 
 message FindByIdRequest {
@@ -14,19 +14,21 @@ message FindByIdRequest {
 
 message BackupFile {
   string id = 1;
-  string dbName = 2;
-  string fileName = 3;
+  string db_name = 2;
+  string file_name = 3;
   string path = 4;
   string size = 5;
-  string createdAt = 6;
+  string created_at = 6;
+  Provider provider = 7;
 }
 
 message GetBackupRequest {
-  int32 offset = 1;   
-  int32 limit = 2;  
-  string dbName = 3;
-  string startDate = 4;
-  string endDate = 5;
+  optional int32 offset = 1;
+  optional int32 limit = 2;
+  string db_name = 3;
+  optional string start_date = 4;
+  optional string end_date = 5;
+  Provider provider = 6;
 }
 
 message GetBackupResponse {
@@ -39,5 +41,13 @@ message DumpRequest {
   string password = 2;
   string host = 3;
   string port = 4;
-  string dbName = 5;
+  string db_name = 5;
+  Provider provider = 6;
+}
+
+enum Provider {
+  UNKNOWN = 0;
+  POSTGRES = 1;
+  MYSQL = 2;
+  MONGODB = 3;
 }

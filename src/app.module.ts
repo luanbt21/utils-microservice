@@ -6,12 +6,14 @@ import { Request } from "express";
 
 import { ConfigModule } from "@nestjs/config";
 import { AppController } from "./app.controller";
-import { PrismaService } from "./prisma.service";
+import { PrismaService } from "./prisma/prisma.service";
 import { BackupModule } from "./grpc/backup/backup.module";
+import { PrismaModule } from "./prisma/prisma.module";
 
 @Module({
 	imports: [
 		ConfigModule.forRoot({ isGlobal: true }),
+		PrismaModule,
 		ZenStackModule.registerAsync({
 			useFactory: (request: Request, prisma: PrismaService) => {
 				return {
@@ -25,6 +27,5 @@ import { BackupModule } from "./grpc/backup/backup.module";
 		BackupModule,
 	],
 	controllers: [AppController],
-	providers: [PrismaService],
 })
 export class AppModule {}

@@ -9,6 +9,7 @@ Table Backup {
   fileName String [not null]
   path String [not null]
   size String [not null]
+  provider Int [not null]
 
   Note: '@@allow(\'all\', true)'
 }
