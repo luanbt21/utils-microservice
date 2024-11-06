@@ -7,6 +7,7 @@ service Backup {
   rpc FindById(FindByIdRequest) returns (BackupFile) {}
   rpc Dump(DumpRequest) returns (BackupFile) {}
   rpc Restore(RestoreRequest) returns (Status) {}
+  rpc Delete(FindByIdRequest) returns (Status) {}
 }
 
 message Status {

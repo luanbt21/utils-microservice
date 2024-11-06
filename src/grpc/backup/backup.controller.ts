@@ -31,4 +31,8 @@ export class BackupController {
 	async restore(data: RestoreRequest): Promise<Status> {
 		return this.backupService.restore(data);
 	}
+
+	async delete({ id }: FindByIdRequest): Promise<Status> {
+		return this.backupService.delete({ id });
+	}
 }

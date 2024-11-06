@@ -13,6 +13,7 @@ import {
 	Provider,
 	RestoreRequest,
 	Status,
+	FindByIdRequest,
 } from "../proto/backup";
 @Injectable()
 export class BackupService {
@@ -147,6 +148,12 @@ export class BackupService {
 			this.logger.error(`error: ${error}`);
 			return { message: "Restore failed" };
 		}
+	}
+
+	async delete({ id }: FindByIdRequest): Promise<Status> {
+		const result = await this.prismaService.backup.delete({ where: { id } });
+		await rm(result.path);
+		return { message: "Delete successfully" };
 	}
 
 	private dumpCommand(

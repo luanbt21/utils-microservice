@@ -4,6 +4,7 @@ import { AppModule } from "../src/app.module";
 import { BackupService } from "../src/grpc/backup/backup.service";
 import {
 	DumpRequest,
+	FindByIdRequest,
 	Provider,
 	RestoreRequest,
 } from "../src/grpc/proto/backup";
@@ -50,6 +51,13 @@ describe("BackupService (e2e)", () => {
 
 		const { message } = await backupService.restore(restoreRequest);
 		expect(message).toBe("Restore successfully");
+
+		const deleteRequest: FindByIdRequest = {
+			id: dumpResponse.id,
+		};
+		const { message: deleteMessage } =
+			await backupService.delete(deleteRequest);
+		expect(deleteMessage).toBe("Delete successfully");
 	});
 
 	it("should dump a MySQL database", async () => {
@@ -76,6 +84,13 @@ describe("BackupService (e2e)", () => {
 
 		const { message } = await backupService.restore(restoreRequest);
 		expect(message).toBe("Restore successfully");
+
+		const deleteRequest: FindByIdRequest = {
+			id: dumpResponse.id,
+		};
+		const { message: deleteMessage } =
+			await backupService.delete(deleteRequest);
+		expect(deleteMessage).toBe("Delete successfully");
 	});
 
 	it("should dump a MongoDB database", async () => {
@@ -99,8 +114,14 @@ describe("BackupService (e2e)", () => {
 			...dumpRequest,
 			id: dumpResponse.id,
 		};
-
 		const { message } = await backupService.restore(restoreRequest);
 		expect(message).toBe("Restore successfully");
+
+		const deleteRequest: FindByIdRequest = {
+			id: dumpResponse.id,
+		};
+		const { message: deleteMessage } =
+			await backupService.delete(deleteRequest);
+		expect(deleteMessage).toBe("Delete successfully");
 	});
 });

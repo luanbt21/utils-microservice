@@ -71,6 +71,8 @@ export interface BackupClient {
   dump(request: DumpRequest): Observable<BackupFile>;
 
   restore(request: RestoreRequest): Observable<Status>;
+
+  delete(request: FindByIdRequest): Observable<Status>;
 }
 
 export interface BackupController {
@@ -81,11 +83,13 @@ export interface BackupController {
   dump(request: DumpRequest): Promise<BackupFile> | Observable<BackupFile> | BackupFile;
 
   restore(request: RestoreRequest): Promise<Status> | Observable<Status> | Status;
+
+  delete(request: FindByIdRequest): Promise<Status> | Observable<Status> | Status;
 }
 
 export function BackupControllerMethods() {
   return function (constructor: Function) {
-    const grpcMethods: string[] = ["findAll", "findById", "dump", "restore"];
+    const grpcMethods: string[] = ["findAll", "findById", "dump", "restore", "delete"];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
       GrpcMethod("Backup", method)(constructor.prototype[method], method, descriptor);
