@@ -7,12 +7,14 @@ import {
 	FindByIdRequest,
 	GetBackupRequest,
 	GetBackupResponse,
+	RestoreRequest,
+	Status,
 } from "../proto/backup";
 
 @Controller()
 @BackupControllerMethods()
 export class BackupController {
-	constructor(private readonly backupService: BackupService) { }
+	constructor(private readonly backupService: BackupService) {}
 
 	async findAll(data: GetBackupRequest): Promise<GetBackupResponse> {
 		return this.backupService.findAll(data);
@@ -24,5 +26,9 @@ export class BackupController {
 
 	async dump(data: DumpRequest): Promise<BackupFile> {
 		return this.backupService.dump(data);
+	}
+
+	async restore(data: RestoreRequest): Promise<Status> {
+		return this.backupService.restore(data);
 	}
 }

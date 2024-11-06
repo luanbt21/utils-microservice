@@ -18,6 +18,10 @@ export enum Provider {
   UNRECOGNIZED = -1,
 }
 
+export interface Status {
+  message: string;
+}
+
 export interface FindByIdRequest {
   id: string;
 }
@@ -51,6 +55,12 @@ export interface DumpRequest {
   provider: Provider;
 }
 
+export interface RestoreRequest {
+  url: string;
+  provider: Provider;
+  id: string;
+}
+
 export const BACKUP_PACKAGE_NAME = "backup";
 
 export interface BackupClient {
@@ -59,6 +69,8 @@ export interface BackupClient {
   findById(request: FindByIdRequest): Observable<BackupFile>;
 
   dump(request: DumpRequest): Observable<BackupFile>;
+
+  restore(request: RestoreRequest): Observable<Status>;
 }
 
 export interface BackupController {
@@ -67,11 +79,13 @@ export interface BackupController {
   findById(request: FindByIdRequest): Promise<BackupFile> | Observable<BackupFile> | BackupFile;
 
   dump(request: DumpRequest): Promise<BackupFile> | Observable<BackupFile> | BackupFile;
+
+  restore(request: RestoreRequest): Promise<Status> | Observable<Status> | Status;
 }
 
 export function BackupControllerMethods() {
   return function (constructor: Function) {
-    const grpcMethods: string[] = ["findAll", "findById", "dump"];
+    const grpcMethods: string[] = ["findAll", "findById", "dump", "restore"];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
       GrpcMethod("Backup", method)(constructor.prototype[method], method, descriptor);

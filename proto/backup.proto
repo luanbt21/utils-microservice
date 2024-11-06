@@ -6,6 +6,11 @@ service Backup {
   rpc FindAll(GetBackupRequest) returns (GetBackupResponse) {}
   rpc FindById(FindByIdRequest) returns (BackupFile) {}
   rpc Dump(DumpRequest) returns (BackupFile) {}
+  rpc Restore(RestoreRequest) returns (Status) {}
+}
+
+message Status {
+  string message = 1;
 }
 
 message FindByIdRequest {
@@ -39,6 +44,12 @@ message GetBackupResponse {
 message DumpRequest {
   string url = 1;
   Provider provider = 2;
+}
+
+message RestoreRequest {
+  string url = 1;
+  Provider provider = 2;
+  string id = 3;
 }
 
 enum Provider {

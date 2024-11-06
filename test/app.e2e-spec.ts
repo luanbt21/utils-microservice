@@ -2,7 +2,11 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { INestApplication } from "@nestjs/common";
 import { AppModule } from "../src/app.module";
 import { BackupService } from "../src/grpc/backup/backup.service";
-import { Provider } from "../src/grpc/proto/backup";
+import {
+	DumpRequest,
+	Provider,
+	RestoreRequest,
+} from "../src/grpc/proto/backup";
 
 describe("BackupService (e2e)", () => {
 	let app: INestApplication;
@@ -24,7 +28,7 @@ describe("BackupService (e2e)", () => {
 
 	it("should dump a PostgreSQL database", async () => {
 		const dbName = "test";
-		const dumpRequest = {
+		const dumpRequest: DumpRequest = {
 			provider: Provider.POSTGRES,
 			url: "postgresql://test:test@postgres:5432/test",
 		};
@@ -38,6 +42,14 @@ describe("BackupService (e2e)", () => {
 		expect(dumpResponse.path).toBeDefined();
 		expect(dumpResponse.size).toBeDefined();
 		expect(dumpResponse.createdAt).toBeDefined();
+
+		const restoreRequest: RestoreRequest = {
+			...dumpRequest,
+			id: dumpResponse.id,
+		};
+
+		const { message } = await backupService.restore(restoreRequest);
+		expect(message).toBe("Restore successfully");
 	});
 
 	it("should dump a MySQL database", async () => {
@@ -56,6 +68,14 @@ describe("BackupService (e2e)", () => {
 		expect(dumpResponse.path).toBeDefined();
 		expect(dumpResponse.size).toBeDefined();
 		expect(dumpResponse.createdAt).toBeDefined();
+
+		const restoreRequest: RestoreRequest = {
+			...dumpRequest,
+			id: dumpResponse.id,
+		};
+
+		const { message } = await backupService.restore(restoreRequest);
+		expect(message).toBe("Restore successfully");
 	});
 
 	it("should dump a MongoDB database", async () => {
@@ -74,5 +94,13 @@ describe("BackupService (e2e)", () => {
 		expect(dumpResponse.path).toBeDefined();
 		expect(dumpResponse.size).toBeDefined();
 		expect(dumpResponse.createdAt).toBeDefined();
+
+		const restoreRequest: RestoreRequest = {
+			...dumpRequest,
+			id: dumpResponse.id,
+		};
+
+		const { message } = await backupService.restore(restoreRequest);
+		expect(message).toBe("Restore successfully");
 	});
 });

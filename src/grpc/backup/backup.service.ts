@@ -11,6 +11,8 @@ import {
 	DumpRequest,
 	BackupFile,
 	Provider,
+	RestoreRequest,
+	Status,
 } from "../proto/backup";
 @Injectable()
 export class BackupService {
@@ -77,19 +79,19 @@ export class BackupService {
 			throw new Error("database name is required");
 		}
 
-		const fileName = `${dbName}-${now}.sql`;
+		const fileName = `${dbName}-${now}`;
 		await mkdir(`../backup-db/${dbName}`, { recursive: true });
 		const path = resolve(`../backup-db/${dbName}/${fileName}`);
 
-		const command = this.dumpCommand({ provider, url }, path);
+		const command = this.dumpCommand({ provider, url }, dbName, path);
 
 		try {
 			const { stdout, stderr } = await asyncExec(command);
 			if (stderr) {
-				this.logger.error(`stderr: ${stderr}`);
+				this.logger.error(`dump ${provider} stderr: ${stderr}`);
 			}
 			if (stdout) {
-				this.logger.log(`stdout: ${stdout}`);
+				this.logger.log(`dump ${provider} stdout: ${stdout}`);
 			}
 
 			const stats = await stat(path);
@@ -116,10 +118,45 @@ export class BackupService {
 		}
 	}
 
-	private dumpCommand({ provider, url }: DumpRequest, path: string) {
+	async restore({ provider, url, id }: RestoreRequest): Promise<Status> {
+		if (!url) {
+			throw new Error("url is required");
+		}
+		const uri = new URL(url);
+		const dbName = uri.pathname.split("/")[1];
+
+		if (!dbName) {
+			throw new Error("database name is required");
+		}
+
+		const asyncExec = promisify(exec);
+		const backup = await this.findById(id);
+		const command = this.restoreCommand({ provider, url }, dbName, backup.path);
+
+		try {
+			const { stdout, stderr } = await asyncExec(command);
+			if (stderr) {
+				this.logger.error(`restore ${provider} stderr: ${stderr}`);
+			}
+			if (stdout) {
+				this.logger.log(`restore ${provider} stdout: ${stdout}`);
+			}
+
+			return { message: "Restore successfully" };
+		} catch (error) {
+			this.logger.error(`error: ${error}`);
+			return { message: "Restore failed" };
+		}
+	}
+
+	private dumpCommand(
+		{ provider, url }: DumpRequest,
+		dbName: string,
+		path: string,
+	) {
 		switch (provider) {
 			case Provider.POSTGRES:
-				return `pg_dump ${url} -f ${path}`;
+				return `pg_dump --format=tar ${url} -f ${path}`;
 
 			case Provider.MYSQL: {
 				const dbUrl = new URL(url);
@@ -127,12 +164,40 @@ export class BackupService {
 				const password = dbUrl.password ? `-p${dbUrl.password}` : "";
 				const host = dbUrl.hostname ? `-h ${dbUrl.hostname}` : "";
 				const port = dbUrl.port ? `-P ${dbUrl.port}` : "";
-				const dbName = dbUrl.pathname.replace("/", "");
 				return `mysqldump ${username} ${password} ${host} ${port} ${dbName} > ${path}`;
 			}
 
 			case Provider.MONGODB:
 				return `mongodump ${url} --archive=${path}`;
+
+			default:
+				throw new Error("Unsupported provider");
+		}
+	}
+
+	private restoreCommand(
+		{ provider, url }: DumpRequest,
+		dbName: string,
+		path: string,
+	) {
+		switch (provider) {
+			case Provider.POSTGRES: {
+				const dbUrl = new URL(url);
+				dbUrl.pathname = "/postgres";
+				return `pg_restore -cC --dbname=${dbUrl} ${path}`;
+			}
+
+			case Provider.MYSQL: {
+				const dbUrl = new URL(url);
+				const username = dbUrl.username ? `-u${dbUrl.username}` : "";
+				const password = dbUrl.password ? `-p${dbUrl.password}` : "";
+				const host = dbUrl.hostname ? `-h ${dbUrl.hostname}` : "";
+				const port = dbUrl.port ? `-P ${dbUrl.port}` : "";
+				return `mysql ${username} ${password} ${host} ${port} ${dbName} < ${path}`;
+			}
+
+			case Provider.MONGODB:
+				return `mongorestore ${url} --archive=${path}`;
 
 			default:
 				throw new Error("Unsupported provider");

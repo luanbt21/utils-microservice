@@ -11,6 +11,7 @@ services:
     volumes:
       - ./test:/app/test
       - ./src:/app/src
+      - ./backup_data:/backup-db
     command: ["pnpm", "test:e2e"]
     
     ports:
