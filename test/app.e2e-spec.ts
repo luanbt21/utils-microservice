@@ -26,11 +26,7 @@ describe("BackupService (e2e)", () => {
 		const dbName = "test";
 		const dumpRequest = {
 			provider: Provider.POSTGRES,
-			dbName,
-			username: "test",
-			password: "test",
-			host: "postgres",
-			port: "5432",
+			url: "postgresql://test:test@postgres:5432/test",
 		};
 
 		const dumpResponse = await backupService.dump(dumpRequest);
@@ -48,11 +44,7 @@ describe("BackupService (e2e)", () => {
 		const dbName = "test";
 		const dumpRequest = {
 			provider: Provider.MYSQL,
-			dbName,
-			username: "root",
-			password: "test",
-			host: "mysql",
-			port: "3306",
+			url: "mysql://root:test@mysql:3306/test",
 		};
 
 		const dumpResponse = await backupService.dump(dumpRequest);
@@ -70,11 +62,7 @@ describe("BackupService (e2e)", () => {
 		const dbName = "test";
 		const dumpRequest = {
 			provider: Provider.MONGODB,
-			dbName,
-			username: "root",
-			password: "test",
-			host: "mongo",
-			port: "27017",
+			url: "mongodb://root:test@mongo:27017/test?authSource=admin",
 		};
 
 		const dumpResponse = await backupService.dump(dumpRequest);

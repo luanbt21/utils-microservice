@@ -37,12 +37,8 @@ message GetBackupResponse {
 }
 
 message DumpRequest {
-  string username = 1;
-  string password = 2;
-  string host = 3;
-  string port = 4;
-  string db_name = 5;
-  Provider provider = 6;
+  string url = 1;
+  Provider provider = 2;
 }
 
 enum Provider {

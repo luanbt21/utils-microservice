@@ -63,30 +63,25 @@ export class BackupService {
 		};
 	}
 
-	async dump({ provider, ...credentials }: DumpRequest): Promise<BackupFile> {
+	async dump({ provider, url }: DumpRequest): Promise<BackupFile> {
 		const asyncExec = promisify(exec);
 		const now = new Date().toISOString();
 
-		const { dbName } = credentials;
+		if (!url) {
+			throw new Error("url is required");
+		}
+		const uri = new URL(url);
+		const dbName = uri.pathname.split("/")[1];
 
 		if (!dbName) {
-			throw new Error("Database name is required");
+			throw new Error("database name is required");
 		}
 
 		const fileName = `${dbName}-${now}.sql`;
 		await mkdir(`../backup-db/${dbName}`, { recursive: true });
 		const path = resolve(`../backup-db/${dbName}/${fileName}`);
 
-		let command: string;
-		if (provider === Provider.POSTGRES) {
-			command = this.pgDumpCommand(credentials, path);
-		} else if (provider === Provider.MYSQL) {
-			command = this.mysqlDumpCommand(credentials, path);
-		} else if (provider === Provider.MONGODB) {
-			command = this.mongoDumpCommand(credentials, path);
-		} else {
-			throw new Error("Unsupported provider");
-		}
+		const command = this.dumpCommand({ provider, url }, path);
 
 		try {
 			const { stdout, stderr } = await asyncExec(command);
@@ -121,41 +116,26 @@ export class BackupService {
 		}
 	}
 
-	private mysqlDumpCommand(
-		{ username, password, host, port, dbName }: Omit<DumpRequest, "provider">,
-		path: string,
-	) {
-		username = username ? `-u ${username}` : "";
-		// -p${password} is correct
-		password = password ? `-p${password}` : "";
-		host = host ? `-h ${host}` : "";
-		port = port ? `-P ${port}` : "";
+	private dumpCommand({ provider, url }: DumpRequest, path: string) {
+		switch (provider) {
+			case Provider.POSTGRES:
+				return `pg_dump ${url} -f ${path}`;
 
-		return `mysqldump ${username} ${password} ${host} ${port} ${dbName} > ${path}`;
-	}
+			case Provider.MYSQL: {
+				const dbUrl = new URL(url);
+				const username = dbUrl.username ? `-u${dbUrl.username}` : "";
+				const password = dbUrl.password ? `-p${dbUrl.password}` : "";
+				const host = dbUrl.hostname ? `-h ${dbUrl.hostname}` : "";
+				const port = dbUrl.port ? `-P ${dbUrl.port}` : "";
+				const dbName = dbUrl.pathname.replace("/", "");
+				return `mysqldump ${username} ${password} ${host} ${port} ${dbName} > ${path}`;
+			}
 
-	private pgDumpCommand(
-		{ username, password, host, port, dbName }: Omit<DumpRequest, "provider">,
-		path: string,
-	) {
-		username = username ? `-U ${username}` : "";
-		host = host ? `-h ${host}` : "";
-		port = port ? `-p ${port}` : "";
+			case Provider.MONGODB:
+				return `mongodump ${url} --archive=${path}`;
 
-		return `PGPASSWORD=${password} pg_dump ${username} ${host} ${port} -d ${dbName} -f ${path}`;
-	}
-
-	private mongoDumpCommand(
-		{ username, password, host, port, dbName }: Omit<DumpRequest, "provider">,
-		path: string,
-	) {
-		username = username ? `-u=${username}` : "";
-		password = password ? `-p=${password}` : "";
-		host = host ? `-h=${host}` : "";
-		port = port ? `--port=${port}` : "";
-
-		// return `mongodump 'mongodb://${username}:${password}@${host}:${port}/${dbName}?authSource=admin' --archive=${path}`;
-
-		return `mongodump --authenticationDatabase=admin ${username} ${password} ${host} ${port} --db=${dbName} --archive=${path}`;
+			default:
+				throw new Error("Unsupported provider");
+		}
 	}
 }

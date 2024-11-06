@@ -47,11 +47,7 @@ export interface GetBackupResponse {
 }
 
 export interface DumpRequest {
-  username: string;
-  password: string;
-  host: string;
-  port: string;
-  dbName: string;
+  url: string;
   provider: Provider;
 }
 
